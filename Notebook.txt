@@ -1,0 +1,389 @@
+✅ Phase 1 - Step 1
+
+Now we'll start writing real production code.
+
+File 1
+backend/requirements.txt
+
+Open it:
+
+nano requirements.txt
+
+Paste:
+
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+sqlalchemy==2.0.42
+psycopg2-binary==2.9.10
+python-dotenv==1.1.1
+pydantic==2.11.7
+pydantic-settings==2.10.1
+python-multipart==0.0.20
+requests==2.32.4
+httpx==0.28.1
+redis==6.4.0
+
+Save:
+
+Ctrl + O
+Enter
+Ctrl + X
+Install packages
+
+Run:
+
+pip install -r requirements.txt
+
+If you don't have a virtual environment yet:
+
+python3 -m venv venv
+
+Activate:
+
+source venv/bin/activate
+
+Then install:
+
+pip install -r requirements.txt
+Why these packages?
+Package	Why we use it
+FastAPI	Backend REST API framework
+Uvicorn	Runs the FastAPI application
+SQLAlchemy	Database ORM
+psycopg2	PostgreSQL driver
+python-dotenv	Read environment variables from .env
+pydantic	Data validation
+pydantic-settings	Configuration management
+requests/httpx	Call external APIs (such as the AI service)
+python-multipart	Handle file uploads
+redis	Connect to Redis for caching
+
+This is a realistic dependency set for a modern Python backend.
+
+File 2
+
+Now create the environment configuration.
+
+Open:
+
+nano .env.example
+
+Paste:
+
+APP_NAME=Lincode Enterprise DevOps
+APP_VERSION=1.0.0
+ENVIRONMENT=development
+
+HOST=0.0.0.0
+PORT=8000
+
+DATABASE_URL=postgresql://postgres:postgres@postgres:5432/lincode_db
+
+REDIS_URL=redis://redis:6379
+
+AI_SERVICE_URL=http://ai-service:8001
+
+SECRET_KEY=change-this-secret-key
+
+Save and exit.
+
+What does this file do?
+
+Instead of hardcoding values in the source code, we keep configuration in environment variables. In production, these values are usually injected by Docker, Kubernetes, or AWS Secrets Manager rather than stored directly in the repository.
+
+Verify installation
+
+Run:
+
+pip list
+
+------------------------------------------------------------------------------------
+What is this file?
+
+This file is the central configuration for the application.
+
+Instead of writing values like:
+
+DATABASE_URL = "postgresql://...."
+
+inside every file,
+
+we store them in
+
+.env.example
+
+and load them here.
+
+In production companies:
+
+Docker injects environment variables.
+Kubernetes ConfigMaps and Secrets inject them.
+AWS Secrets Manager or Parameter Store may provide sensitive values.
+
+Keeping configuration separate from code makes applications easier to deploy across development, testing, and production environments.
+
+Project flow
+
+Right now we have:
+
+.env.example
+        │
+        ▼
+config.py
+        │
+        ▼
+Every Python file imports settings
+
+For example:
+
+from app.config import settings
+
+print(settings.APP_NAME)
+
+================================================================================
+                 Interview Questions
+===================================================================================                 
+Q1. Why use environment variables?
+
+Answer:
+
+To separate configuration from application code.
+
+Examples include:
+
+Database password
+Redis URL
+API keys
+AWS credentials
+Ports
+
+This avoids hardcoding sensitive or environment-specific values.
+
+Q2. What is pydantic-settings?
+
+It loads environment variables into strongly typed Python objects with validation, making configuration easier to manage and less error-prone.
+
+Q3. Why shouldn't secrets be hardcoded?
+
+Because source code is often stored in Git repositories.
+
+Production systems use:
+
+AWS Secrets Manager
+HashiCorp Vault
+Kubernetes Secrets
+
+instead of embedding secrets in code.
+=========================================================================================================
+📚 Understanding this file
+
+This file creates the database connection layer.
+
+FastAPI
+    │
+    ▼
+database.py
+    │
+    ▼
+SQLAlchemy Engine
+    │
+    ▼
+PostgreSQL
+
+create_engine()
+engine = create_engine(settings.DATABASE_URL)
+
+This creates a connection engine to PostgreSQL.
+
+Think of it as opening the highway to the database.
+
+SessionLocal
+SessionLocal = sessionmaker(...)
+
+Every API request gets its own database session.
+
+Example:
+
+User A  ── Session A
+User B  ── Session B
+User C  ── Session C
+
+This is important for handling multiple users safely.
+
+Base
+Base = declarative_base()
+
+Every database model will inherit from Base.
+
+For example, later we'll write:
+
+class User(Base):
+    ...
+
+This tells SQLAlchemy to create a database table for the model.
+
+get_db()
+def get_db():
+
+This is a FastAPI dependency.
+
+It:
+
+Opens a database session.
+Makes it available to the request.
+Automatically closes it when the request finishes.
+
+This prevents connection leaks.
+
+🧠 Interview Questions
+Q1. What is SQLAlchemy?
+A Python ORM (Object Relational Mapper) that lets you work with database tables using Python classes instead of writing SQL for every operation.
+
+Q2. What is an ORM?
+
+An ORM maps Python objects to database tables.
+
+Example:
+
+user.name = "Noor"
+
+instead of:
+
+INSERT INTO users(name)
+VALUES('Noor');
+Q3. Why do we use sessionmaker?
+It creates a new, isolated database session for each request,
+ensuring transactions are handled safely and connections are properly managed.
+
+🏗️ Complete Project Roadmap
+
+Phase 1 ✅ Project Setup
+│
+├── Python Virtual Environment
+├── FastAPI
+├── PostgreSQL
+├── SQLAlchemy
+├── Pydantic
+├── CRUD Structure
+├── Health API
+├── Swagger
+└── Configuration Management
+
+Phase 2 🚀 Backend Development
+│
+├── Inspection CRUD APIs
+├── Image Upload
+├── File Validation
+├── AI Prediction Service
+├── Database Integration
+├── Exception Handling
+├── Logging
+└── Unit Testing
+
+Phase 3 🚀 AI Microservice
+│
+├── TensorFlow / PyTorch
+├── Image Prediction API
+├── REST API
+└── Docker
+
+Phase 4 🚀 Frontend
+│
+├── React
+├── Upload Page
+├── Dashboard
+├── Charts
+└── History Page
+
+Phase 5 🚀 Docker
+│
+├── Backend Container
+├── Frontend Container
+├── AI Container
+├── PostgreSQL
+├── Redis
+└── Docker Compose
+
+Phase 6 🚀 Kubernetes
+│
+├── Deployment
+├── Service
+├── ConfigMap
+├── Secret
+├── Ingress
+├── HPA
+└── Persistent Volume
+
+Phase 7 🚀 CI/CD
+│
+├── Jenkins
+├── GitHub Webhook
+├── Docker Build
+├── DockerHub Push
+├── Kubernetes Deploy
+└── Rollback
+
+Phase 8 🚀 Monitoring
+│
+├── Prometheus
+├── Grafana
+├── Loki
+├── AlertManager
+└── Node Exporter
+
+Phase 9 🚀 AWS
+│
+├── EKS
+├── ECR
+├── ALB
+├── Route53
+├── ACM
+└── CloudWatch
+
+Phase 10 🚀 Terraform
+│
+├── VPC
+├── EC2
+├── EKS
+├── IAM
+├── Security Groups
+└── S3 Backend
+
+Run this command 
+(venv) noor@LAPTOP-ELA3HV5K:/mnt/g/lincode-enterprise-devops/backend$ uvicorn app.main:app --reload
+
+
+🏆 Final Architecture
+
+                     GitHub
+                        │
+                        ▼
+                   Jenkins Pipeline
+                        │
+        ┌───────────────┼───────────────┐
+        ▼               ▼               ▼
+ Docker Build     Unit Test      Security Scan
+        │
+        ▼
+ DockerHub / AWS ECR
+        │
+        ▼
+ Kubernetes (AWS EKS)
+        │
+ ┌──────┼───────────┐
+ ▼      ▼           ▼
+Frontend Backend AI Service
+            │
+            ▼
+      PostgreSQL
+            │
+            ▼
+          Redis
+            │
+            ▼
+ Prometheus → Grafana → AlertManager
+
+
+============================================================================
+
+

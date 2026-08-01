@@ -1,0 +1,810 @@
+                    Program (models.py)
+=====================================================================
+from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy.sql import func
+
+from app.database import Base
+
+
+class InspectionResult(Base):
+    """
+    Stores AI inspection results.
+    """
+
+    __tablename__ = "inspection_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    image_name = Column(String(255), nullable=False)
+
+    prediction = Column(String(100), nullable=False)
+
+    confidence = Column(Float, nullable=False)
+
+    status = Column(String(50), default="Completed")
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+---------------------------------------------------------------------------------------------------
+
+    Let's understand every line
+Import SQLAlchemy column types
+from sqlalchemy import Column, Integer, String, Float, DateTime
+
+These define the types of columns in your table.
+
+Example:
+
+age = Column(Integer)
+name = Column(String)
+Import SQL function
+from sqlalchemy.sql import func
+
+We'll use:
+
+func.now()
+
+to automatically store the current timestamp.
+
+Import Base
+from app.database import Base
+
+Every model inherits from Base so SQLAlchemy knows it represents a database table.
+
+Create the model
+class InspectionResult(Base):
+
+This Python class maps to a PostgreSQL table.
+
+Table name
+__tablename__ = "inspection_results"
+
+SQLAlchemy will create:
+
+inspection_results
+Primary key
+id = Column(Integer, primary_key=True, index=True)
+
+This creates:
+
+id SERIAL PRIMARY KEY
+Image name
+image_name = Column(String(255), nullable=False)
+
+Stores the uploaded file name.
+
+Example:
+
+gear.jpg
+motor.png
+part001.jpeg
+Prediction
+prediction = Column(String(100), nullable=False)
+
+Example values:
+
+Good
+Defective
+Scratch
+Crack
+Missing Part
+Confidence
+confidence = Column(Float, nullable=False)
+
+Example:
+
+98.45
+87.12
+99.80
+Status
+status = Column(String(50), default="Completed")
+
+Possible values:
+
+Pending
+Processing
+Completed
+Failed
+Timestamp
+created_at = Column(
+    DateTime(timezone=True),
+    server_default=func.now()
+)
+
+The database automatically records when the row is created.
+
+Expected PostgreSQL table
+
+Later, SQLAlchemy will create something similar to:
+
+CREATE TABLE inspection_results (
+    id SERIAL PRIMARY KEY,
+    image_name VARCHAR(255) NOT NULL,
+    prediction VARCHAR(100) NOT NULL,
+    confidence FLOAT NOT NULL,
+    status VARCHAR(50),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+🎯 Interview Questions
+1. What is __tablename__?
+
+It specifies the database table name associated with the SQLAlchemy model.
+
+2. Why do we inherit from Base?
+
+Because SQLAlchemy uses Base to identify ORM models and generate the corresponding database tables.
+
+3. Why use server_default=func.now()?
+
+It lets the database automatically set the timestamp whenever a new row is inserted, without the application needing to provide it.
+
+✅ Your task
+Update models.py with the code above.
+Save the file.
+Run:
+cat models.py
+Paste the output here.
+====================================================================================================
+  
+                Program (schemas.py) 2
+-------------------------------------------------------------------------------------------------
+from datetime import datetime
+
+from pydantic import BaseModel
+
+
+class InspectionCreate(BaseModel):
+    """
+    Request schema for creating an inspection result.
+    """
+
+    image_name: str
+    prediction: str
+    confidence: float
+    status: str = "Completed"
+
+
+class InspectionResponse(BaseModel):
+    """
+    Response schema returned by the API.
+    """
+
+    id: int
+    image_name: str
+    prediction: str
+    confidence: float
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+     ----------------------------------------------
+     🚀 Phase 1 - Step 5: Create API Schemas
+
+Now we'll create:
+
+backend/app/schemas.py
+What are Schemas?
+
+A common interview question is:
+
+What is the difference between Models and Schemas?
+
+SQLAlchemy Model (models.py)
+Represents a database table.
+Used to read/write data in PostgreSQL.
+Pydantic Schema (schemas.py)
+Validates incoming API requests.
+Defines the JSON responses sent back to clients.
+Data Flow
+React Frontend
+        │
+        ▼
+ JSON Request
+        │
+        ▼
+Pydantic Schema
+        │
+        ▼
+FastAPI
+        │
+        ▼
+SQLAlchemy Model
+        │
+        ▼
+PostgreSQL
+
+----------------Understanding the Schemas-------------------
+InspectionCreate
+
+This is used when a client sends data to the API.
+
+Example request:
+{
+  "image_name": "gear.jpg",
+  "prediction": "Defective",
+  "confidence": 98.6,
+  "status": "Completed"
+}
+FastAPI validates this automatically.
+
+InspectionResponse
+
+This is what the API returns.
+
+Example response:
+{
+  "id": 1,
+  "image_name": "gear.jpg",
+  "prediction": "Defective",
+  "confidence": 98.6,
+  "status": "Completed",
+  "created_at": "2026-07-31T10:30:00Z"
+}
+Why from_attributes = True?
+
+This tells Pydantic that it can build a response directly from a SQLAlchemy model object.
+
+Without it, returning ORM objects from FastAPI would fail validation.
+
+🎯 Interview Questions
+1. Why use Pydantic schemas?
+
+To validate request data, serialize responses, and ensure the API exchanges data in the expected format.
+
+2. Why not expose SQLAlchemy models directly?
+The client should not provide fields like id or created_at; those are generated by the database. Separate
+schemas make this distinction clear.
+
+====================================================================================================
+                            Program()3
+------------------------------------------------------------------------------------------
+🚀 Phase 1 – Step 6: Create CRUD Operations
+
+Now we'll create the functions that actually interact with the database.
+
+What is CRUD?
+
+One of the most common DevOps/Python/FastAPI interview questions.
+
+CRUD stands for:
+
+Operation	SQL	HTTP
+Create	INSERT	POST
+Read	SELECT	GET
+Update	UPDATE	PUT/PATCH
+Delete	DELETE	DELETE
+
+Our crud.py file will contain reusable database functions
+
+📚 Understanding this file
+1. create_inspection()
+
+This function inserts a new row into PostgreSQL.
+
+Flow:
+
+API Request
+      │
+      ▼
+InspectionCreate Schema
+      │
+      ▼
+CRUD Function
+      │
+      ▼
+SQLAlchemy
+      │
+      ▼
+PostgreSQL
+2. db.add()
+db.add(db_inspection)
+
+Adds the object to the current database session.
+
+3. db.commit()
+db.commit()
+
+Writes the changes permanently to the database.
+
+Without commit(), nothing is saved.
+
+4. db.refresh()
+db.refresh(db_inspection)
+
+Reloads the object from the database so generated values like id and created_at are available.
+
+5. get_all_inspections()
+
+Equivalent SQL:
+
+SELECT * FROM inspection_results;
+6. get_inspection_by_id()
+
+Equivalent SQL:
+
+SELECT *
+FROM inspection_results
+WHERE id = 1;
+
+🎯 Interview Questions
+Q1. Why separate CRUD logic from routers?
+It keeps the code modular. Routers handle HTTP requests, while CRUD functions handle database
+operations. This separation makes the application easier to maintain and test.
+
+Q2. Why call db.commit()?
+
+commit() permanently saves the transaction to the database. Without it, changes remain uncommitted and
+are lost when the session ends.
+
+Q3. Why call db.refresh()?
+
+After inserting a row, the database generates values such as the primary key and timestamp. refresh()
+updates the Python object with those generated values.
+
+========================================================================================================
+                        Program(health.py)4
+  -----------------------------------------------------------------------------------
+  🚀 Phase 1 – Step 7: Create Your First API Endpoint
+
+Now we'll create the first endpoint that lets us verify the backend is running.
+
+File: app/routers/health.py
+
+From your current directory (backend/app):  
+
+📘 What is APIRouter?
+
+Instead of putting every endpoint in main.py, FastAPI encourages splitting routes into modules.
+🌐 What endpoint are we creating?
+GET /health/
+
+When you open:
+
+http://localhost:8000/health/
+
+You should eventually receive:
+
+{
+  "status": "healthy",
+  "application": "Lincode Enterprise DevOps",
+  "version": "1.0.0"
+}
+
+🎯 Interview Questions
+Q1. What is APIRouter?
+
+It lets you organize API endpoints into separate modules instead of placing everything in one file. This
+improves readability, scalability, and maintainability.
+
+Q2. Why do we use a Health API?
+
+Health endpoints are used by:
+
+Kubernetes readiness probes
+Kubernetes liveness probes
+AWS Load Balancer health checks
+Monitoring systems such as Prometheus
+
+to verify that an application is running correctly
+======================================================================================================
+                       Program(main.py)5
+---------------------------------------------------------------------------
+🚀 Phase 1 – Step 8: Build the FastAPI Application (main.py)
+
+Now we'll connect everything together.
+
+Open main.py
+
+From your current directory (backend/app/routers): 
+---------------------------------------------------------------------------------
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import settings
+from app.database import Base, engine
+from app.routers import health
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+# Create FastAPI application
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Later we'll restrict this in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Register routers
+app.include_router(health.router)
+
+
+@app.get("/")
+def root():
+    return {
+        "message": "Welcome to Lincode Enterprise DevOps API",
+        "docs": "/docs",
+        "health": "/health/"
+    }
+
+    📘 Understanding this file
+1. Create database tables
+Base.metadata.create_all(bind=engine)
+
+This tells SQLAlchemy:
+
+"Create all tables defined in models.py if they don't already exist."
+
+For now, it will create:
+
+inspection_results
+
+Later, in production, we'll replace this with Alembic database migrations, because that's the industry standard.
+
+2. Create the FastAPI app
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+)
+
+This uses the values from your config.py and automatically updates the API documentation.
+
+3. Configure CORS
+allow_origins=["*"]
+
+CORS allows your React frontend to communicate with the FastAPI backend.
+
+For learning, "*" is fine.
+
+In production, we'd do something like:
+
+allow_origins=[
+    "http://localhost:5173",
+    "https://yourcompany.com"
+]
+
+4. Register the router
+app.include_router(health.router)
+
+This makes the /health/ endpoint available.
+
+5. Root endpoint
+
+When you visit:
+
+http://localhost:8000/
+
+you'll receive:
+{
+  "message": "Welcome to Lincode Enterprise DevOps API",
+  "docs": "/docs",
+  "health": "/health/"
+}
+▶️ Run the application
+
+Go to the backend directory (not app):
+
+cd ..
+
+If you're inside backend/app, go one more level up:
+
+
+*******************************************************************************************
+* Phase 2 Development Plan
+* We'll build the backend exactly like a real company
+*
+*******************************************************************************************
+Client
+   │
+   ▼
+FastAPI Router
+   │
+   ▼
+Service Layer
+   │
+   ▼
+CRUD Layer
+   │
+   ▼
+SQLAlchemy
+   │
+   ▼
+PostgreSQL
+---------------------------------------------------------
+🚀 Phase 2 - Module 1: Inspection CRUD API
+Goal
+
+Build a complete Inspection Management API that stores inspection results in PostgreSQL.
+
+By the end of this module, you'll have these APIs:
+
+Method	Endpoint	                   Description
+POST	/api/v1/inspection	      Create a new inspection
+GET	    /api/v1/inspection 	      Get all inspections
+GET	    /api/v1/inspection/{id}	  Get one inspection
+DELETE	/api/v1/inspection/{id}	  Delete an inspection
+
+
+=================================================================================
+            DateTime 01/08/2026
+
+----------------------------------------------------------------------------------------
+📚 Why are we creating these folders?
+uploads/
+
+Stores uploaded images before they are processed.
+
+Example:
+
+uploads/
+
+bearing001.jpg
+
+motor12.png
+
+gearbox.jpeg
+
+Later we'll move these to AWS S3.
+
+utils/--------------------------------------------------
+
+Keeps reusable helper functions.
+
+Examples:
+
+Validate image type
+Generate unique filename
+Delete image
+Resize image
+Compress image
+
+This avoids duplicating code across routers and services.
+
+📖 Interview Question
+
+Q: Why don't we save uploaded images directly in the database?
+
+Answer:
+
+Images are usually stored in file storage such as:
+
+Local filesystem (development)
+AWS S3
+Azure Blob Storage
+Google Cloud Storage
+
+The database stores only metadata, for example:
+
+id
+
+filename
+
+path
+
+created_at
+
+This keeps the database efficient and scalable.
+
+🏗 What we'll build next
+
+After these folders are created, we'll implement:
+
+utils/file_handler.py – save and validate uploaded files.
+routers/inspection.py – add an image upload endpoint.
+models.py – extend the inspection model with file metadata.
+schemas.py – update request/response models.
+crud.py – save file information to PostgreSQL.
+Test everything through Swagger.
+=====================================================================================================
+                    ----------------Program-----------------------
+
+import os
+import shutil
+import uuid
+from fastapi import UploadFile
+
+# Folder where uploaded files will be stored
+UPLOAD_DIRECTORY = "app/uploads"
+
+# Allowed image extensions
+ALLOWED_EXTENSIONS = {
+    ".jpg",
+    ".jpeg",
+    ".png"
+}
+
+
+def validate_image(filename: str):
+    """
+    Validate uploaded image extension.
+    """
+
+    extension = os.path.splitext(filename)[1].lower()
+
+    if extension not in ALLOWED_EXTENSIONS:
+        raise ValueError(
+            "Only JPG, JPEG and PNG images are allowed."
+        )
+
+
+def generate_unique_filename(filename: str):
+    """
+    Generate unique filename.
+    """
+
+    extension = os.path.splitext(filename)[1]
+
+    unique_name = f"{uuid.uuid4()}{extension}"
+
+    return unique_name
+
+
+def save_upload_file(file: UploadFile):
+    """
+    Save uploaded image into uploads folder.
+    """
+
+    validate_image(file.filename)
+
+    filename = generate_unique_filename(file.filename)
+
+    file_path = os.path.join(
+        UPLOAD_DIRECTORY,
+        filename
+    )
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return filename
+
+    --------------------------------------------------------------------
+    📚 Let's understand this file
+1. validate_image()
+
+Checks whether the uploaded file has an allowed extension.
+
+Allowed:
+
+.jpg
+
+.jpeg
+
+.png
+
+Rejected:
+
+.exe
+
+.zip
+
+.pdf
+
+.sh
+2. generate_unique_filename()
+
+Suppose two users upload:
+
+image.jpg
+
+Without a unique filename:
+
+image.jpg
+
+would be overwritten.
+
+Instead, we generate something like:
+
+5a3b7f11-c91e-4a9d-a7d2-5db57e0d0c43.jpg
+
+This guarantees uniqueness.
+
+3. save_upload_file()
+
+This function:
+
+Validates the file.
+Generates a unique filename.
+Saves it under:
+app/uploads/
+Returns the generated filename.
+
+🧠 Interview Questions
+Q1. Why use UUIDs for filenames?
+
+To prevent collisions when multiple users upload files with the same name.
+
+Q2. Why validate file extensions?
+
+To reject unsupported file types early and reduce the risk of accepting unexpected uploads.
+
+Q3. Why keep file-handling logic in a utility module?
+
+Because it can be reused by multiple routers and services, keeping the code organized and avoiding duplication.
+
+🧠 Interview Question
+
+Q: Why are uploaded_filename and file_path optional?
+
+A good answer is:
+Because an inspection record can be created before an image is uploaded. Marking these fields as
+optional allows the API to represent that intermediate state while maintaining a valid response model.
+
+🧠 Interview Question
+
+Q: Why not call the CRUD layer directly from the router?
+
+A good answer:
+The service layer contains business logic. It keeps routers focused on handling HTTP requests and
+responses while allowing business rules to evolve without changing the API layer.
+
+"How did you test your upload API?"
+
+You can answer:
+"I created a reusable sample-images directory containing industrial inspection images such as bearings,
+gears, welded joints, and steel surface defects. I used those images to test the upload API, validate file
+handling, and later integrate them with the AI prediction service."
+
+================================================================================
+🎯 Interview Perspective
+
+Right now, if an interviewer asks:
+
+"What have you built?
+
+"I developed a FastAPI backend with PostgreSQL and SQLAlchemy, implemented a layered architecture
+(Router → Service → CRUD), built complete CRUD APIs, integrated Swagger for API testing, and
+implemented a secure image upload API that validates image types, generates UUID-based filenames to
+avoid collisions, and stores uploaded files for later AI-based inspection."
+
+----------------------------------------------------------------------------------------
+Interview Question
+
+If an interviewer asks:
+
+Why is prediction "Pending" initially?
+
+Answer:
+Because the image upload and AI inference are separate operations. Uploading stores the image and
+creates an inspection record. The AI service processes the image afterward and updates the prediction,
+confidence, and status. This design allows the system to scale independently and prevents long-running
+AI processing from blocking uploads.
+
+📌 Interview Question
+
+Q: Why create a database record immediately after upload instead of waiting for AI prediction?
+
+A strong answer is:
+Uploading the image and running AI inference are separate responsibilities. Creating the inspection
+record immediately ensures every upload is tracked, while the AI service can process images
+asynchronously and update the record later. This improves scalability and reliability.
+
+🧠 Interview Question
+
+Q: Why use a Service layer instead of calling CRUD directly from the Router?
+
+A strong answer:
+The Router should only handle HTTP requests and responses. The Service layer contains business logic
+and orchestration, while the CRUD layer is responsible for database access. This separation improves
+maintainability, testing, and scalability.
+
+🧠 Interview Question
+
+Q: Why save the upload to the database immediately?
+
+A strong answer:
+Each upload is treated as an inspection job. By creating a database record immediately, the system can
+track the inspection lifecycle (Uploaded → Processing → Completed), even if AI processing happens later.
+This also allows retries, auditing, and history tracking.
