@@ -12,6 +12,7 @@ from app import schemas
 from app.services import inspection_service
 from app.utils.file_handler import save_upload_file
 
+
 router = APIRouter(
     prefix="/api/v1/inspection",
     tags=["Inspection"]
@@ -23,13 +24,9 @@ def create_inspection(
     inspection: schemas.InspectionCreate,
     db: Session = Depends(get_db)
 ):
-    """
-    Create a new inspection record.
-    """
-
-    return inspection_service.create_inspection(
-        db=db,
-        inspection=inspection
+    raise HTTPException(
+        status_code=501,
+        detail="Use /api/v1/inspection/upload to create inspections."
     )
 
 

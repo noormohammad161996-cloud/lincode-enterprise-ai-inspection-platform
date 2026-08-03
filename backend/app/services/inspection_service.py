@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
-
 from app import crud, schemas
-
+from app.services.ai_client import get_prediction
 
 def create_inspection(
     db: Session,
@@ -10,9 +9,20 @@ def create_inspection(
     file_path: str,
 ):
     """
-    Create a new inspection record.
+    Create inspection after getting AI prediction.
     """
 
+    # Call AI Service
+    prediction_result = get_prediction(
+        inspection.image_name
+    )
+
+    # Update inspection object
+    inspection.prediction = prediction_result["prediction"]
+    inspection.confidence = prediction_result["confidence"]
+    inspection.status = "Completed"
+
+    # Save into database
     return crud.create_inspection(
         db=db,
         inspection=inspection,
