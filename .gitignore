@@ -1,29 +1,47 @@
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
-*.pyd
 
 # Virtual Environment
 venv/
-backend/venv/
-
-# Environment Variables
 .env
 
 # VS Code
 .vscode/
 
-# Python cache
-.pytest_cache/
+# JetBrains
+.idea/
 
-# OS files
+# macOS
 .DS_Store
+
+# Windows
 Thumbs.db
 
 # Logs
 *.log
 
-# Uploads
+# Python Cache
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Uploaded Images
 backend/app/uploads/*
 !backend/app/uploads/.gitkeep
+
+# Environment Files
+.env
+.env.*
+
+# Docker
+*.pid
+
+# PostgreSQL
+*.sql
+
+# Secrets
+secrets/
