@@ -1,3 +1,8 @@
+import os
+
+# Set testing environment BEFORE importing the application.
+os.environ["ENVIRONMENT"] = "testing"
+
 import pytest
 
 from fastapi.testclient import TestClient
@@ -9,7 +14,7 @@ import app.main as main_module
 from app.database import Base, get_db
 
 
-# Isolated SQLite database for automated tests
+# Isolated SQLite database for automated tests.
 TEST_DATABASE_URL = "sqlite://"
 
 test_engine = create_engine(
@@ -39,15 +44,7 @@ def db():
 
 
 @pytest.fixture(scope="function")
-def client(db, monkeypatch):
-    # Prevent application startup from connecting
-    # to the real PostgreSQL database during tests.
-    monkeypatch.setattr(
-        main_module,
-        "initialize_database",
-        lambda: None,
-    )
-
+def client(db):
     def override_get_db():
         try:
             yield db
