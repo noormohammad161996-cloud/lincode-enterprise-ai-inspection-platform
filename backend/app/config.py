@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     APP_NAME: str = "Lincode Enterprise DevOps"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "1.0.1"
     ENVIRONMENT: str = "development"
 
     HOST: str = "0.0.0.0"
