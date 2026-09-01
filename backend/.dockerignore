@@ -1,0 +1,48 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+venv/
+.env
+.git
+.gitignore
+
+tests/
+
+uploads/
+
+README.md
+
+.vscode/
+
+.idea/
+
+pytest_cache/
+
+.coverage
+
+# Ignore Python bytecode cache folders.
+# Python automatically creates __pycache__ after running a program.
+# These files are regenerated inside the container, so copying them is unnecessary.
+# Ignoring them reduces Docker image size and speeds up builds.
+__pycache__/
+
+# Ignore all compiled Python bytecode files (.pyc).
+# The '*' wildcard means "match any filename".
+# Examples:
+#   app.pyc
+#   main.pyc
+#   config.pyc
+# These files are recreated automatically by Python.
+*.pyc
+
+# Ignore optimized Python bytecode files (.pyo).
+# Modern Python rarely generates these, but excluding them is a good practice.
+*.pyo
+
+# Ignore Python extension modules (.pyd).
+# These are typically Windows-specific compiled binaries.
+# They should not be copied into a Linux Docker container because
+# Docker installs compatible packages during the build process.
+*.pyd

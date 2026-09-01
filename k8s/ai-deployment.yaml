@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+  name: ai-deployment
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: ai
+
+  template:
+
+    metadata:
+      labels:
+        app: ai
+
+    spec:
+
+      containers:
+
+      - name: ai
+
+        image: lincode-enterprise-devops-ai-service:latest
+
+        imagePullPolicy: Never
+
+        ports:
+
+        - containerPort: 8001
