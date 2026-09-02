@@ -2,8 +2,9 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 
 metadata:
+  namespace: lincode
   name: backend-to-redis
-  namespace: default
+  namespace: lincode
 
 spec:
   podSelector:

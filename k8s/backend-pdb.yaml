@@ -2,6 +2,7 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 
 metadata:
+  namespace: lincode
   name: backend-pdb
 
 spec:
